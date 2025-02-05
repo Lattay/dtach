@@ -18,7 +18,7 @@
 #ifndef dtach_h
 #define dtach_h
 
-#include <config.h>
+#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -27,23 +27,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
-#else
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#endif
 
 #ifdef HAVE_PTY_H
 #include <pty.h>
-#endif
-
-#ifdef HAVE_UTIL_H
-#include <util.h>
 #endif
 
 #ifdef HAVE_LIBUTIL_H

@@ -53,11 +53,6 @@ static struct client *clients;
 /* The pseudo-terminal created for the child process. */
 static struct pty the_pty;
 
-#ifndef HAVE_FORKPTY
-pid_t forkpty(int *amaster, char *name, struct termios *termp,
-	struct winsize *winp);
-#endif
-
 /* Unlink the socket */
 static void
 unlink_socket(void)
@@ -559,7 +554,7 @@ master_main(char **argv, int waitattach, int dontfork)
 
 	/* Use a default redraw method if one hasn't been specified yet. */
 	if (redraw_method == REDRAW_UNSPEC)
-		redraw_method = REDRAW_CTRL_L;
+		redraw_method = REDRAW_DEFAULT;
 
 	/* Create the unix domain socket. */
 	s = create_socket(sockname);
@@ -667,7 +662,7 @@ master_main(char **argv, int waitattach, int dontfork)
 #ifndef HAVE_OPENPTY
 #define HAVE_OPENPTY
 /* openpty: Use /dev/ptmx and Unix98 if we have it. */
-#if defined(HAVE_PTSNAME) && defined(HAVE_GRANTPT) && defined(HAVE_UNLOCKPT)
+#if _POSIX_C_SOURCE >= 200112L
 int
 openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	struct winsize *winp)
@@ -675,18 +670,6 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	int master, slave;
 	char *buf;
 
-#ifdef _AIX
-	master = open("/dev/ptc", O_RDWR|O_NOCTTY);
-	if (master < 0)
-		return -1;
-	buf = ttyname(master);
-	if (!buf)
-		return -1;
-
-	slave = open(buf, O_RDWR|O_NOCTTY);
-	if (slave < 0)
-		return -1;
-#else
 	master = open("/dev/ptmx", O_RDWR);
 	if (master < 0)
 		return -1;
@@ -707,7 +690,6 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 		return -1;
 	if (ioctl(slave, I_PUSH, "ldterm") < 0)
 		return -1;
-#endif
 #endif
 
 	*amaster = master;
